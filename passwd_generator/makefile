@@ -1,2 +1,2 @@
 all:
-	g++ -o generator generator.cpp -std=c++11
+	g++ -o genpwd generator.cpp -std=c++11
