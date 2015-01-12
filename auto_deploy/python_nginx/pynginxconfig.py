@@ -1,30 +1,6 @@
-'''
-======================================================================================================
-Copyright (c) 2013, Makarov Yurii 
-
-               All rights reserved.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and
-associated documentation files (the "Software"), to deal in the Software without restriction,
-including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
-and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial
-portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-======================================================================================================
-'''
-
 class NginxConfig:
     def __init__(self, offset_char=' '):
-        self.i = 0 #char iterator for parsing
+        self.i = 0  # char iterator for parsing
         self.length = 0
         self.config = ''
         self.data = []
@@ -73,7 +49,7 @@ class NginxConfig:
             raise KeyError('No such block.')
 
         if isinstance(elem, str) and isinstance(value, str):
-            #modifying text parameter
+            # modifying text parameter
             for i, param in enumerate(parent):
                 if isinstance(param, tuple):
                     if param[0] == elem:
@@ -89,12 +65,15 @@ class NginxConfig:
                         raise TypeError('Not expected value type')
 
         elif isinstance(elem, tuple):
-            #modifying block
+            # modifying block
             if len(elem) == 1:
                 elem = (elem[0], '')
             for i, block in enumerate(parent):
+                print "elem:", elem
+                print "block:", block
                 if isinstance(block, dict):
                     if elem == (block['name'], block['param']):
+                        print "yes!!"
                         if value is not None and isinstance(value, list):
                             parent[i]['value'] = value
                             return
@@ -117,7 +96,7 @@ class NginxConfig:
                 item = item_arr[0]
             else:
                 element = item_arr.pop(0)
-                if isinstance(element, tuple):#cannot be a string
+                if isinstance(element, tuple):  # cannot be a string
                     if len(element) == 1:
                         element = (element[0], '')
                     for i, data_elem in enumerate(data):
@@ -125,7 +104,7 @@ class NginxConfig:
                             if (data_elem['name'], data_elem['param']) == element:
                                 return self.get(item_arr, self.get_value(data[i]))
 
-        if not 'item' in locals():
+        if 'item' not in locals():
             raise KeyError('Error while getting parameter.')
         if isinstance(item, str):
             for i, elem in enumerate(data):
@@ -161,12 +140,12 @@ class NginxConfig:
                 item = item_arr[0]
             else:
                 elem = item_arr.pop(0)
-                if type(elem) in [tuple,str]:
+                if type(elem) in [tuple, str]:
                     self.remove(item_arr, self.get_value(self.get(elem, data)))
                     return
 
         if isinstance(item, str):
-            for i,elem in enumerate(data):
+            for i, elem in enumerate(data):
                 if isinstance(elem, tuple):
                     if elem[0] == item:
                         del data[i]
@@ -174,7 +153,7 @@ class NginxConfig:
         elif isinstance(item, tuple):
             if len(item) == 1:
                 item = (item[0], '')
-            for i,elem in enumerate(data):
+            for i, elem in enumerate(data):
                 if isinstance(elem, dict):
                     if (elem['name'], elem['param']) == item:
                         del data[i]
@@ -211,7 +190,7 @@ class NginxConfig:
         param_value = None
         buf = ''
         while self.i < self.length:
-            if self.config[self.i] == '\n': #multiline value
+            if self.config[self.i] == '\n':  # multiline value
                 if buf and param_name:
                     if param_value is None:
                         param_value = []
@@ -249,7 +228,7 @@ class NginxConfig:
             elif self.config[self.i] == '}':
                 self.i += 1
                 return data
-            elif self.config[self.i] == '#': #skip comments
+            elif self.config[self.i] == '#':  # skip comments
                 if self.config[self.i + 1] == ' ':
                     while self.i < self.length and self.config[self.i] != '\n':
                         self.i += 1
@@ -261,16 +240,15 @@ class NginxConfig:
         return data
 
     def gen_block(self, blocks, offset):
-        subrez = '' # ready to return string
+        subrez = ''  # ready to return string
         block_name = None
         block_param = ''
         for i, block in enumerate(blocks):
             if isinstance(block, tuple):
                 if isinstance(block[1], str):
                     subrez += self.off_char * offset + '%s %s;\n' % (block[0], block[1])
-                else: #multiline
-                    subrez += self.off_char * offset + '%s %s;\n' % (block[0], 
-                        self.gen_block(block[1], offset + len(block[0]) + 1))
+                else:  # multiline
+                    subrez += self.off_char * offset + '%s %s;\n' % (block[0], self.gen_block(block[1], offset + len(block[0]) + 1))
 
             elif isinstance(block, dict):
                 block_value = self.gen_block(block['value'], offset + 4)
@@ -281,10 +259,10 @@ class NginxConfig:
                 if subrez != '':
                     subrez += '\n'
                 subrez += '%(offset)s%(name)s %(param)s{\n%(data)s%(offset)s}\n' % {
-                    'offset':self.off_char * offset, 'name':block['name'], 'data':block_value,
-                    'param':param}
+                    'offset': self.off_char * offset, 'name': block['name'], 'data': block_value,
+                    'param': param}
 
-            elif isinstance(block, str): #multiline params
+            elif isinstance(block, str):  # multiline params
                 if i == 0:
                     subrez += '%s\n' % block
                 else:
@@ -292,8 +270,8 @@ class NginxConfig:
 
         if block_name:
             return '%(offset)s%(name)s %(param)s{\n%(data)s%(offset)s}\n' % {
-                'offset':self.off_char * offset, 'name':block_name, 'data':subrez,
-                'param':block_param}
+                'offset': self.off_char * offset, 'name': block_name, 'data': subrez,
+                'param': block_param}
         else:
             return subrez
 
