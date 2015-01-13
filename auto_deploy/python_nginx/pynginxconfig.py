@@ -95,14 +95,14 @@ class NginxConfig:
             if len(item_arr) == 1:
                 item = item_arr[0]
             else:
-                element = item_arr.pop(0)
+                element = item_arr[0]
                 if isinstance(element, tuple):  # cannot be a string
                     if len(element) == 1:
                         element = (element[0], '')
                     for i, data_elem in enumerate(data):
                         if isinstance(data_elem, dict):
                             if (data_elem['name'], data_elem['param']) == element:
-                                return self.get(item_arr, self.get_value(data[i]))
+                                return self.get(item_arr[1:], self.get_value(data[i]))
 
         if 'item' not in locals():
             raise KeyError('Error while getting parameter.')
