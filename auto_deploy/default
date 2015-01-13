@@ -2,9 +2,9 @@ user www www;
 
 upstream http {
     # hehe
-    server 127.0.0.1:8000;
-    #server 127.0.0.1:8001;
-    server 127.0.0.1:8002;
+    server 127.0.0.1:8000 weight=3;
+    #server 127.0.0.1:8001 weight=3;
+    server 127.0.0.1:8002 weight=3;
 }
 
 server {
