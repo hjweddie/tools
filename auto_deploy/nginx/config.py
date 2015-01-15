@@ -261,16 +261,7 @@ class Config:
                     buf = ''
                 # has param_name or len(buf.strip()) == 0
                 else:
-                    #################################
                     buf += self.config[self.i]
-                    #################################
-                    # 使value变为list
-                    # if param_value is None:
-                    #    param_value = []
-
-                    # if len(buf.strip()) > 0:
-                    #    param_value.append(buf.strip())
-                    #    buf = ''
             elif self.config[self.i] == ';':
                 if isinstance(param_value, list):
                     # tag value
