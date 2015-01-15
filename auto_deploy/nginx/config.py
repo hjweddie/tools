@@ -52,23 +52,29 @@ class Config:
 
     # 设置节点
     # item_arr -> 节点路径
+    # steps:
+    #     1. get its parent
+    #     2. set via its parent
     def set(self, item_arr, value=None, param=None, name=None):
+        # 寻找父节点
         # 最外层item
         if isinstance(item_arr, str):
-            elem = item_arr
+            elem = item_arr  # str
             parent = self.data
         # 最外层block
         elif isinstance(item_arr, list) and len(item_arr) == 1:
-            elem = item_arr[0]
+            elem = item_arr[0]  # tuple
             parent = self.data
-        # 内层block或item, 递归查找
+        # 内层block或item
         else:
-            elem = item_arr[-1]
+            elem = item_arr[-1]  # tuple
             parent = self.get_value(self.get(item_arr[0:-1]))
 
         if parent is None:
             raise KeyError('No such block.')
 
+        # 通过父节点设置
+        # 最外层item
         if isinstance(elem, str) and isinstance(value, str):
             # modifying text parameter
             for i, param in enumerate(parent):
@@ -108,14 +114,17 @@ class Config:
     def get(self, item_arr, data=[]):
         if data == []:
             data = self.data
+        # 外层block or item
         if type(item_arr) in [str, tuple]:
             item = item_arr
+        # 外层block or 内层节点
         elif isinstance(item_arr, list):
             if len(item_arr) == 1:
                 item = item_arr[0]
             else:
                 element = item_arr[0]
                 if isinstance(element, tuple):  # cannot be a string
+                    # 只有name
                     if len(element) == 1:
                         element = (element[0], '')
                     for i, data_elem in enumerate(data):
@@ -125,11 +134,13 @@ class Config:
 
         if 'item' not in locals():
             raise KeyError('Error while getting parameter.')
+        # 外层item
         if isinstance(item, str):
             for i, elem in enumerate(data):
                 if isinstance(elem, tuple):
                     if elem[0] == item:
                         return data[i]
+        # 外层item
         elif isinstance(item, tuple):
             if len(item) == 1:
                 item = (item[0], '')
@@ -140,6 +151,7 @@ class Config:
         return None
 
     # 添加节点
+    # position -> insert index
     def append(self, item, root=[], position=None):
         if root == []:
             root = self.data
@@ -236,7 +248,6 @@ class Config:
         while self.i < self.length:
             # 换行符可能block换行或item之间的换行
             if self.config[self.i] == '\n':  # multiline value
-                # 存在param_name是block!!
                 if buf and param_name:
                     if param_value is None:
                         param_value = []
@@ -248,8 +259,18 @@ class Config:
                     # tag name
                     param_name = buf.strip()
                     buf = ''
+                # has param_name or len(buf.strip()) == 0
                 else:
+                    #################################
                     buf += self.config[self.i]
+                    #################################
+                    # 使value变为list
+                    # if param_value is None:
+                    #    param_value = []
+
+                    # if len(buf.strip()) > 0:
+                    #    param_value.append(buf.strip())
+                    #    buf = ''
             elif self.config[self.i] == ';':
                 if isinstance(param_value, list):
                     # tag value
@@ -321,6 +342,6 @@ class Config:
         else:
             return subrez
 
-    def gen_config(self, offset_char='\t'):
+    def gen_config(self, offset_char=''):
         self.off_char = offset_char
         return self.gen_block(self.data, 0)
