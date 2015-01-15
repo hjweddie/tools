@@ -76,7 +76,158 @@ class Item:
 
 
 class Config:
-    pass
+    def __init__(self, data):
+        self._data = data
+
+    @property
+    def data(self):
+        return self._data
+
+    # 获取节点
+    def get(self, item_arr, data=[]):
+        if data == []:
+            data = self.data
+        # 外层block or item
+        if type(item_arr) in [str, tuple]:
+            item = item_arr
+        # 外层block or 内层节点
+        elif isinstance(item_arr, list):
+            if len(item_arr) == 1:
+                item = item_arr[0]
+            else:
+                element = item_arr[0]
+                if isinstance(element, tuple):  # cannot be a string
+                    # 只有name
+                    if len(element) == 1:
+                        element = (element[0], '')
+                    for i, data_elem in enumerate(data):
+                        if isinstance(data_elem, dict):
+                            if element == (data_elem['name'], data_elem['param']):
+                                return self.get(item_arr[1:], self.get_value(data[i]))
+
+        if 'item' not in locals():
+            raise KeyError('Error while getting parameter.')
+        # 外层item
+        if isinstance(item, str):
+            for i, elem in enumerate(data):
+                if isinstance(elem, tuple):
+                    if elem[0] == item:
+                        return data[i]
+        # 外层item
+        elif isinstance(item, tuple):
+            if len(item) == 1:
+                item = (item[0], '')
+            for i, elem in enumerate(data):
+                if isinstance(elem, dict):
+                    if (elem['name'], elem['param']) == item:
+                        return data[i]
+        return None
+
+    # 添加节点
+    # position -> insert index
+    def append(self, item, root=[], position=None):
+        if root == []:
+            root = self.data
+        elif root is None:
+            raise AttributeError('Root element is None')
+        if position:
+            root.insert(position, item)
+        else:
+            root.append(item)
+
+    # 删除节点(所有)
+    def remove(self, item_arr, data=[]):
+        if data == []:
+            data = self.data
+        if type(item_arr) in [str, tuple]:
+            item = item_arr
+        elif isinstance(item_arr, list):
+            if len(item_arr) == 1:
+                item = item_arr[0]
+            else:
+                elem = item_arr.pop(0)
+                if type(elem) in [tuple, str]:
+                    self.remove(item_arr, self.get_value(self.get(elem, data)))
+                    return
+
+        if isinstance(item, str):
+            for i, elem in enumerate(data):
+                if isinstance(elem, tuple):
+                    if elem[0] == item:
+                        del data[i]
+                        return
+        elif isinstance(item, tuple):
+            if len(item) == 1:
+                item = (item[0], '')
+            for i, elem in enumerate(data):
+                if isinstance(elem, dict):
+                    if (elem['name'], elem['param']) == item:
+                        del data[i]
+                        return
+        else:
+            raise AttributeError("Unknown item type '%s' in item_arr" % item.__class__.__name__)
+        raise KeyError('Unable to remove')
+
+    # 配置项开/关注释
+    def toggle(self, item_arr, value):
+        parent_id = item_arr[0:-1]
+        parent = self.get(parent_id)
+        parent_value = self.get_value(parent)
+        new_value = []
+        for row in parent_value:
+            n = row[0]
+            v = row[1]
+
+            if v == value:
+                if '#' == n[0]:
+                    # to take effect
+                    n = n[1:]
+                else:
+                    # to lose effect
+                    n = "%s%s" % ('#', n)
+            new_row = (n, v)
+            new_value.append(new_row)
+        self.set(parent_id, value=new_value)
+
+    def gen_block(self, blocks, offset):
+        subrez = ''  # ready to return string
+        block_name = None
+        block_param = ''
+        for i, block in enumerate(blocks):
+            if isinstance(block, tuple):
+                if isinstance(block[1], str):
+                    subrez += self.off_char * offset + '%s %s;\n' % (block[0], block[1])
+                else:  # multiline
+                    subrez += self.off_char * offset + '%s %s;\n' % (block[0], self.gen_block(block[1], offset + len(block[0]) + 1))
+
+            elif isinstance(block, dict):
+                block_value = self.gen_block(block['value'], offset + 4)
+                if block['param']:
+                    param = block['param'] + ' '
+                else:
+                    param = ''
+                if subrez != '':
+                    subrez += '\n'
+                subrez += '%(offset)s%(name)s %(param)s{\n%(data)s%(offset)s}\n' % {
+                    'offset': self.off_char * offset, 'name': block['name'], 'data': block_value,
+                    'param': param}
+
+            elif isinstance(block, str):  # multiline params
+                if i == 0:
+                    subrez += '%s\n' % block
+                else:
+                    subrez += '%s%s\n' % (self.off_char * offset, block)
+
+        if block_name:
+            return '%(offset)s%(name)s %(param)s{\n%(data)s%(offset)s}\n' % {
+                'offset': self.off_char * offset, 'name': block_name, 'data': subrez,
+                'param': block_param}
+        else:
+            return subrez
+
+    def gen_config(self, offset_char=''):
+        self.off_char = offset_char
+        return self.gen_block(self.data, 0)
 
 
 # block -> dict{ "name": "upstream", "param": "http", "value": [ block or items ] }
@@ -186,125 +337,20 @@ class Parser:
                         raise TypeError('Not expected value type')
         raise KeyError('No such parameter.')
 
-    # 获取节点
-    def get(self, item_arr, data=[]):
-        if data == []:
-            data = self.data
-        # 外层block or item
-        if type(item_arr) in [str, tuple]:
-            item = item_arr
-        # 外层block or 内层节点
-        elif isinstance(item_arr, list):
-            if len(item_arr) == 1:
-                item = item_arr[0]
-            else:
-                element = item_arr[0]
-                if isinstance(element, tuple):  # cannot be a string
-                    # 只有name
-                    if len(element) == 1:
-                        element = (element[0], '')
-                    for i, data_elem in enumerate(data):
-                        if isinstance(data_elem, dict):
-                            if element == (data_elem['name'], data_elem['param']):
-                                return self.get(item_arr[1:], self.get_value(data[i]))
-
-        if 'item' not in locals():
-            raise KeyError('Error while getting parameter.')
-        # 外层item
-        if isinstance(item, str):
-            for i, elem in enumerate(data):
-                if isinstance(elem, tuple):
-                    if elem[0] == item:
-                        return data[i]
-        # 外层item
-        elif isinstance(item, tuple):
-            if len(item) == 1:
-                item = (item[0], '')
-            for i, elem in enumerate(data):
-                if isinstance(elem, dict):
-                    if (elem['name'], elem['param']) == item:
-                        return data[i]
-        return None
-
-    # 添加节点
-    # position -> insert index
-    def append(self, item, root=[], position=None):
-        if root == []:
-            root = self.data
-        elif root is None:
-            raise AttributeError('Root element is None')
-        if position:
-            root.insert(position, item)
-        else:
-            root.append(item)
-
-    # 删除节点(所有)
-    def remove(self, item_arr, data=[]):
-        if data == []:
-            data = self.data
-        if type(item_arr) in [str, tuple]:
-            item = item_arr
-        elif isinstance(item_arr, list):
-            if len(item_arr) == 1:
-                item = item_arr[0]
-            else:
-                elem = item_arr.pop(0)
-                if type(elem) in [tuple, str]:
-                    self.remove(item_arr, self.get_value(self.get(elem, data)))
-                    return
-
-        if isinstance(item, str):
-            for i, elem in enumerate(data):
-                if isinstance(elem, tuple):
-                    if elem[0] == item:
-                        del data[i]
-                        return
-        elif isinstance(item, tuple):
-            if len(item) == 1:
-                item = (item[0], '')
-            for i, elem in enumerate(data):
-                if isinstance(elem, dict):
-                    if (elem['name'], elem['param']) == item:
-                        del data[i]
-                        return
-        else:
-            raise AttributeError("Unknown item type '%s' in item_arr" % item.__class__.__name__)
-        raise KeyError('Unable to remove')
-
-    # 配置项开/关注释
-    def toggle(self, item_arr, value):
-        parent_id = item_arr[0:-1]
-        parent = self.get(parent_id)
-        parent_value = self.get_value(parent)
-        new_value = []
-        for row in parent_value:
-            n = row[0]
-            v = row[1]
-
-            if v == value:
-                if '#' == n[0]:
-                    # to take effect
-                    n = n[1:]
-                else:
-                    # to lose effect
-                    n = "%s%s" % ('#', n)
-            new_row = (n, v)
-            new_value.append(new_row)
-        self.set(parent_id, value=new_value)
-
     # 读取配置 - 字符串
     # 读取完成后进行配置解析
     def load(self, config):
         self.config = config
         self.length = len(config) - 1
         self.i = 0
-        self.data = self.parse_block()
+        return self.parse_block()
 
     # 读取配置 - 文件
     def loadf(self, filename):
+        conf = ''
         with open(filename, 'r') as f:
             conf = f.read()
-            self.load(conf)
+        return self.load(conf)
 
     # 生成新配置文件
     def savef(self, filename):
@@ -371,50 +417,11 @@ class Parser:
             else:
                 buf += self.config[self.i]
             self.i += 1
-        return data
+        return Config(data)
 
-    def gen_block(self, blocks, offset):
-        subrez = ''  # ready to return string
-        block_name = None
-        block_param = ''
-        for i, block in enumerate(blocks):
-            if isinstance(block, tuple):
-                if isinstance(block[1], str):
-                    subrez += self.off_char * offset + '%s %s;\n' % (block[0], block[1])
-                else:  # multiline
-                    subrez += self.off_char * offset + '%s %s;\n' % (block[0], self.gen_block(block[1], offset + len(block[0]) + 1))
-
-            elif isinstance(block, dict):
-                block_value = self.gen_block(block['value'], offset + 4)
-                if block['param']:
-                    param = block['param'] + ' '
-                else:
-                    param = ''
-                if subrez != '':
-                    subrez += '\n'
-                subrez += '%(offset)s%(name)s %(param)s{\n%(data)s%(offset)s}\n' % {
-                    'offset': self.off_char * offset, 'name': block['name'], 'data': block_value,
-                    'param': param}
-
-            elif isinstance(block, str):  # multiline params
-                if i == 0:
-                    subrez += '%s\n' % block
-                else:
-                    subrez += '%s%s\n' % (self.off_char * offset, block)
-
-        if block_name:
-            return '%(offset)s%(name)s %(param)s{\n%(data)s%(offset)s}\n' % {
-                'offset': self.off_char * offset, 'name': block_name, 'data': subrez,
-                'param': block_param}
-        else:
-            return subrez
-
-    def gen_config(self, offset_char=''):
-        self.off_char = offset_char
-        return self.gen_block(self.data, 0)
 
 if __name__ == "__main__":
     path = r'../default'
     parser = Parser()
-    parser.loadf(path)
-    print "data:", parser.data
+    print "data:", parser.loadf(path).data
+    # print "data:", parser.data

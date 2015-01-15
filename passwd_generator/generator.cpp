@@ -27,7 +27,6 @@ unordered_set<char> specials{'+', '=', '-', '@', '#', '!', '%', '*', '$'};
 string help = "usage: generate [type] -l [length]\ntype:\nd - digits\na - alphabets\nc - capitalized alphabets\ns - specials\n-l	length of the generated password\nexapmple:\ngenerate dacs -l 32\n";
 
 int main(int n, char **args) {
-	cout << n << endl;
 	if(4 != n) {
 		cout << help;
 		return 0;
@@ -53,13 +52,9 @@ int main(int n, char **args) {
 	int length = atoi(args[3]), csize = characters.size();
 	vector<char> chars = vector<char>(characters.begin(), characters.end());
 
-	boost::mt19937 gen;
-	vector<double> probabilities = vector<double>(csize, 1.0/csize);
-	boost::random::discrete_distribution<> dist(probabilities);
 	for(i = 0; i < length; ++i) {
-		//srand((unsigned)time(0)+i);
-		int index = dist(gen);
-		//int index = (rand() % csize);
+		srand((unsigned)time(0)+i);
+		int index = (rand() % csize);
 		result = result + chars[index];
 	}
 	cout << result << endl;
