@@ -1,11 +1,87 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
-# block -> dict{ "name": "upstream", "param": "http", "value": [ block or items ] }
-# item  -> tuple( "name", "value" )
+
+class Block:
+    def __init__(self):
+        self._name = None
+        self._value = None
+        self._param = None
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, dest):
+        self._name = dest
+
+    @name.deleter
+    def name(self):
+        del self._name
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, dest):
+        self._name = dest
+
+    @value.deleter
+    def value(self):
+        del self._value
+
+    @property
+    def param(self):
+        return self._param
+
+    @param.setter
+    def param(self, dest):
+        self._param = dest
+
+    @param.deleter
+    def param(self):
+        del self._param
+
+
+class Item:
+    def __init__(self):
+        self._name = None
+        self._value = None
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, dest):
+        self._name = dest
+
+    @name.deleter
+    def name(self):
+        del self._name
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, dest):
+        self._name = dest
+
+    @value.deleter
+    def value(self):
+        del self._value
 
 
 class Config:
+    pass
+
+
+# block -> dict{ "name": "upstream", "param": "http", "value": [ block or items ] }
+# item  -> tuple( "name", "value" )
+class Parser:
     def __init__(self, offset_char=' '):
         # 解析过程下表指针
         self.i = 0
@@ -162,7 +238,7 @@ class Config:
         else:
             root.append(item)
 
-    # 删除节点
+    # 删除节点(所有)
     def remove(self, item_arr, data=[]):
         if data == []:
             data = self.data
@@ -336,3 +412,9 @@ class Config:
     def gen_config(self, offset_char=''):
         self.off_char = offset_char
         return self.gen_block(self.data, 0)
+
+if __name__ == "__main__":
+    path = r'../default'
+    parser = Parser()
+    parser.loadf(path)
+    print "data:", parser.data
