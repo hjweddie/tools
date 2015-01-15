@@ -31,7 +31,8 @@ nc = config.Config()
 nc.loadf(path)
 take_effect_item_arr = [('upstream', 'http'), '#server']
 nc.toggle(take_effect_item_arr, "127.0.0.1:8001 weight=3")
-print nc.gen_config()
+print "file content:", nc.gen_config()
+print "data:", nc.data
 
 #lose_effect_item_arr = [('upstream', 'http'), 'server']
 #lose_effect_item_arr_test = [('server',), ('location', r'/doc/'), 'alias']

@@ -1,9 +1,23 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+# block -> dict{ "name": "upstream", "param": "http", "value": [ block or items ] }
+# item  -> tuple( "name", "value" )
+
+
 class Config:
     def __init__(self, offset_char=' '):
-        self.i = 0  # char iterator for parsing
-        self.length = 0
+        # 解析过程下表指针
+        self.i = 0
+        # 文件内容
         self.config = ''
+        # 文件内容长度
+        self.length = 0
+
+        # 结构化Nginx配置
         self.data = []
+
+        # tab or whitespace ~
         self.off_char = offset_char
 
     def __getitem__(self, index):
@@ -18,6 +32,7 @@ class Config:
     def __call__(self):
         return self.gen_config()
 
+    # 获取节点值
     def get_value(self, data):
         if isinstance(data, tuple):
             return data[1]
@@ -26,6 +41,7 @@ class Config:
         else:
             return data
 
+    # 获取节点名
     def get_name(self, data):
         if isinstance(data, tuple):
             return data[0]
@@ -34,16 +50,21 @@ class Config:
         else:
             return data
 
+    # 设置节点
+    # item_arr -> 节点路径
     def set(self, item_arr, value=None, param=None, name=None):
+        # 最外层item
         if isinstance(item_arr, str):
             elem = item_arr
             parent = self.data
+        # 最外层block
         elif isinstance(item_arr, list) and len(item_arr) == 1:
             elem = item_arr[0]
             parent = self.data
+        # 内层block或item, 递归查找
         else:
-            elem = item_arr.pop()
-            parent = self.get_value(self.get(item_arr))
+            elem = item_arr[-1]
+            parent = self.get_value(self.get(item_arr[0:-1]))
 
         if parent is None:
             raise KeyError('No such block.')
@@ -83,6 +104,7 @@ class Config:
                         raise TypeError('Not expected value type')
         raise KeyError('No such parameter.')
 
+    # 获取节点
     def get(self, item_arr, data=[]):
         if data == []:
             data = self.data
@@ -117,6 +139,7 @@ class Config:
                         return data[i]
         return None
 
+    # 添加节点
     def append(self, item, root=[], position=None):
         if root == []:
             root = self.data
@@ -127,6 +150,7 @@ class Config:
         else:
             root.append(item)
 
+    # 删除节点
     def remove(self, item_arr, data=[]):
         if data == []:
             data = self.data
@@ -159,11 +183,10 @@ class Config:
             raise AttributeError("Unknown item type '%s' in item_arr" % item.__class__.__name__)
         raise KeyError('Unable to remove')
 
+    # 配置项开/关注释
     def toggle(self, item_arr, value):
         parent_id = item_arr[0:-1]
-        print "parent id:", parent_id
         parent = self.get(parent_id)
-        print "parent:", parent
         parent_value = self.get_value(parent)
         new_value = []
         for row in parent_value:
@@ -181,20 +204,21 @@ class Config:
             new_value.append(new_row)
         self.set(parent_id, value=new_value)
 
+    # 读取配置 - 字符串
+    # 读取完成后进行配置解析
     def load(self, config):
         self.config = config
         self.length = len(config) - 1
         self.i = 0
         self.data = self.parse_block()
 
+    # 读取配置 - 文件
     def loadf(self, filename):
-        try:
-            f = open(filename, 'r')
+        with open(filename, 'r') as f:
             conf = f.read()
             self.load(conf)
-        finally:
-            f.close()
 
+    # 生成新配置文件
     def savef(self, filename):
         try:
             f = open(filename, 'w')
@@ -203,13 +227,16 @@ class Config:
         finally:
             f.close()
 
+    # 块解析器
     def parse_block(self):
         data = []
         param_name = None
         param_value = None
         buf = ''
         while self.i < self.length:
+            # 换行符可能block换行或item之间的换行
             if self.config[self.i] == '\n':  # multiline value
+                # 存在param_name是block!!
                 if buf and param_name:
                     if param_value is None:
                         param_value = []
@@ -294,6 +321,6 @@ class Config:
         else:
             return subrez
 
-    def gen_config(self, offset_char=' '):
+    def gen_config(self, offset_char='\t'):
         self.off_char = offset_char
         return self.gen_block(self.data, 0)

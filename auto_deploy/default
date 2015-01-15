@@ -1,4 +1,4 @@
-user www www;
+user www;
 
 upstream http {
     # hehe
