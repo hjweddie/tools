@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 # encoding: utf-8
+#
+#  Author:   huangjunwei@youmi.net
+#  Time:     Fri 16 Jan 2015 05:21:25 PM HKT
+#  File:     config.py
+#  Desc:
+#
 
 from parser import Parser
 import re
@@ -198,23 +204,27 @@ class Config:
     # 配置项开/关注释
     def _toggle(self, item_arr, reg):
         parent_id = item_arr[0:-1]
+        this_name = item_arr[-1]
         parent = self._get(parent_id)
         parent_value = self._get_value(parent)
         new_value = []
 
         for row in parent_value:
-            n = row[0]
-            v = row[1]
+            if isinstance(row, tuple):
+                n = row[0]
+                v = row[1]
 
-            if re.search(reg, v):
-                if '#' == n[0]:
-                    # to take effect
-                    n = n[1:]
-                else:
-                    # to lose effect
-                    n = "%s%s" % ('#', n)
-            new_row = (n, v)
-            new_value.append(new_row)
+                if this_name in n and re.search(reg, v):
+                    if '#' == n[0]:
+                        # to take effect
+                        n = n[1:]
+                    else:
+                        # to lose effect
+                        n = "%s%s" % ('#', n)
+                new_row = (n, v)
+                new_value.append(new_row)
+            else:
+                new_value.append(row)
         self._set(parent_id, value=new_value)
 
     def gen_block(self, blocks, offset):
@@ -294,74 +304,41 @@ class Config:
             if type(condition) is tuple:
                 item_arr.append(condition)
             elif type(condition) is str and index == end:
-                item_arr.append(condition)
+                # item_arr.append(condition)
+                item_arr.append((condition, ))
             else:
                 item_arr.append((condition, ))
 
         self._position = self._position[0:-1] + item_arr
-        #print self._position
-
-        ## 查找符合的所有节点，返回数组
-        #nodes = []
-        #this = self._get(self._position)
-        ##print "this:", this
-        #parent = self._parent()
-        ##print "parent:", parent
-        #if [] == parent:
-            #nodes.append(this)
-        #else:
-            #for child in parent["value"]:
-                #if (type(child), type(this)) == (dict, dict):
-                    #if child["name"] == this["name"] and child["param"] == child["param"]:
-                        #nodes.append(child)
-                #elif (type(child), type(this)) == (tuple, tuple):
-                    #if child[0] == this[0]:
-                        #nodes.append(child)
 
         return self
 
     # 根据值查找
-    # def where(self, name, reg):
-        # # 查找范围
-        # self._condition = (name, reg)
+    def where(self, name, reg):
+        pass
+
+    # 只能插入配置项
+    def append(self):
+        pass
 
     def remove(self):
         pass
 
-    # def parent(self):
-        # pass
+    def parent(self):
+        pass
 
-    def toggle(self, name, reg):
-        #print "position: ", self._position
+    def toggle(self, name, reg='.*'):
         item_arr = [p for p in self._position]
         item_arr.append(name)
-        #print "item_arr in toggle: ", item_arr
         self._toggle(item_arr, reg)
         return self
 
     # active record end   #
 
 if __name__ == "__main__":
-    path = r'../default'
+    path = r'../fxcb.conf'
     config = Config(path)
-    #print "data:", config.data
-    print "--------------------------------------------------"
-    #lose_effect_item_arr = [('upstream', 'http'), 'server']
-    print config.find(('upstream', 'http')).toggle('server', 'weight=3').data
-    #print "location data:", locations.data
-    #servers = item_arr = config.find(('upstream', 'http'), 'server')
 
-    #print config.get(item_arr)
-    #lose_effect_item_arr_test = [('server',), ('location', r'/doc/'), 'alias']
-    #print "--------------------------------------------------"
-    #toggle(path, take_effect_item_arr, "127.0.0.1:8001")
-    #print "--------------------------------------------------"
-    #config.toggle(path, lose_effect_item_arr, "127.0.0.1:8002")
-    #config.toggle(lose_effect_item_arr, "127.0.0.1:8002 weight=3")
-    #config.toggle(lose_effect_item_arr, "weight=3")
-    #print "data:", config.data
-
-    #print "--------------------------------------------------"
-    #toggle(path, lose_effect_item_arr_test, "/usr/share/doc/")
-    #print "--------------------------------------------------"
-    # print "data:", parser.data
+    print config.find(('upstream', 'fxcb-recharge-com')).toggle('server', '10.4.14.239').data
+    # print config.find('http', 'server').toggle('server_name').data
+    config.savef(r'../result.conf')

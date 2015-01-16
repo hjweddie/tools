@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 # encoding: utf-8
+#
+#  Author:   huangjunwei@youmi.net
+#  Time:     Fri 16 Jan 2015 05:23:13 PM HKT
+#  File:     parser.py
+#  Desc:
+#
 
 
-# block -> dict{ "name": "upstream", "param": "http", "value": [ block or items ] }
-# item  -> tuple( "name", "value" )
 class Parser:
+    # block -> dict{ "name": "upstream", "param": "http", "value": [ block or items ] }
+    # item  -> tuple( "name", "value" )
     def __init__(self, offset_char=' '):
         # 解析过程下表指针
         self.i = 0
@@ -94,3 +100,4 @@ class Parser:
                 buf += self.config[self.i]
             self.i += 1
         return data
+
