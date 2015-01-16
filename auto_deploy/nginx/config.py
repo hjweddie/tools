@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 # encoding: utf-8
 
+from parser import Parser
+
 
 class Config:
-    def __init__(self, data):
-        self._data = data
-
-    @property
-    def data(self):
-        return self._data
+    def __init__(self, filename):
+        self._data = Parser().loadf(filename)
 
     # 获取节点
-    def get(self, item_arr, data=[]):
+    def _get(self, item_arr, data=[]):
         if data == []:
             data = self._data
         # 外层block or item
@@ -30,7 +28,7 @@ class Config:
                     for data_elem in data:
                         if isinstance(data_elem, dict):
                             if (data_elem['name'], data_elem['param']) == element:
-                                return self.get(item_arr[1:], self.get_value(data[i]))
+                                return self._get(item_arr[1:], self._get_value(data_elem))
 
         if 'item' not in locals():
             raise KeyError('Error while getting parameter.')
@@ -51,7 +49,7 @@ class Config:
         return None
 
     # 获取节点值
-    def get_value(self, data):
+    def _get_value(self, data):
         if isinstance(data, tuple):
             return data[1]
         elif isinstance(data, dict):
@@ -60,7 +58,7 @@ class Config:
             return data
 
     # 获取节点名
-    def get_name(self, data):
+    def _get_name(self, data):
         if isinstance(data, tuple):
             return data[0]
         elif isinstance(data, dict):
@@ -73,7 +71,7 @@ class Config:
     # steps:
     #     1. get its parent
     #     2. set via its parent
-    def set(self, item_arr, value=None, param=None, name=None):
+    def _set(self, item_arr, value=None, param=None, name=None):
         # 寻找父节点
         # 最外层item
         if isinstance(item_arr, str):
@@ -86,7 +84,7 @@ class Config:
         # 内层block或item
         else:
             elem = item_arr[-1]  # tuple
-            parent = self.get_value(self.get(item_arr[0:-1]))
+            parent = self._get_value(self._get(item_arr[0:-1]))
 
         if parent is None:
             raise KeyError('No such block.')
@@ -130,7 +128,7 @@ class Config:
 
     # 添加节点
     # position -> insert index
-    def append(self, item, root=[], position=None):
+    def _append(self, item, root=[], position=None):
         if [] == root:
             root = self._data
         elif root is None:
@@ -141,7 +139,7 @@ class Config:
             root.append(item)
 
     # 删除节点(所有)
-    def remove(self, item_arr, data=[]):
+    def _remove(self, item_arr, data=[]):
         if [] == data:
             data = self._data
         if type(item_arr) in [str, tuple]:
@@ -152,11 +150,11 @@ class Config:
             else:
                 elem = item_arr[0]
                 if type(elem) in [tuple, str]:
-                    self.remove(item_arr[1:], self.get_value(self.get(elem, data)))
+                    self._remove(item_arr[1:], self._get_value(self._get(elem, data)))
                     return
 
         if isinstance(item, str):
-            for i, elem in enumerate(data:
+            for i, elem in enumerate(data):
                 if isinstance(elem, tuple):
                     if elem[0] == item:
                         del data[i]
@@ -174,10 +172,10 @@ class Config:
         raise KeyError('Unable to remove')
 
     # 配置项开/关注释
-    def toggle(self, item_arr, value):
+    def _toggle(self, item_arr, value):
         parent_id = item_arr[0:-1]
-        parent = self.get(parent_id)
-        parent_value = self.get_value(parent)
+        parent = self._get(parent_id)
+        parent_value = self._get_value(parent)
         new_value = []
         for row in parent_value:
             n = row[0]
@@ -193,7 +191,7 @@ class Config:
                     n = "%s%s" % ('#', n)
             new_row = (n, v)
             new_value.append(new_row)
-        self.set(parent_id, value=new_value)
+        self._set(parent_id, value=new_value)
 
     def gen_block(self, blocks, offset):
         subrez = ''  # ready to return string
@@ -231,6 +229,9 @@ class Config:
         else:
             return subrez
 
+    ########################################################
+    #                  可供外部访问的函数                  #
+    ########################################################
     def gen_config(self, offset_char=' '):
         self.off_char = offset_char
         return self.gen_block(self._data, 0)
@@ -241,116 +242,33 @@ class Config:
             conf = self.gen_config()
             f.write(conf)
 
+    # toggle = _toggle
 
-# block -> dict{ "name": "upstream", "param": "http", "value": [ block or items ] }
-# item  -> tuple( "name", "value" )
-class Parser:
-    def __init__(self, offset_char=' '):
-        # 解析过程下表指针
-        self.i = 0
-        # 文件内容
-        self.config = ''
-        # 文件内容长度
-        self.length = 0
+    # @property
+    # def data(self):
+    # return self._data
 
-        # 结构化Nginx配置
-        self.data = []
+    # active record begin #
+    def find(self):
+        pass
 
-        # tab or whitespace ~
-        self.off_char = offset_char
+    def where(self):
+        pass
 
-    def __getitem__(self, index):
-        return self.data[index]
+    def remove(self):
+        pass
 
-    def __setitem__(self, index, value):
-        self.data[index] = value
+    def parent(self):
+        pass
 
-    def __delitem__(self, index):
-        del self.data[index]
+    def toggle(self, item_arr, value):
+        self._toggle(item_arr, value)
 
-    def __call__(self):
-        return self.gen_config()
-
-    # 读取配置 - 字符串
-    # 读取完成后进行配置解析
-    def load(self, config):
-        self.config = config
-        self.length = len(config) - 1
-        self.i = 0
-        return self.parse_block()
-
-    # 读取配置 - 文件
-    def loadf(self, filename):
-        conf = ''
-        with open(filename, 'r') as f:
-            conf = f.read()
-        return self.load(conf)
-
-
-    # 块解析器
-    def parse_block(self):
-        data = []
-        param_name = None
-        param_value = None
-        buf = ''
-        while self.i < self.length:
-            # 换行符可能block换行或item之间的换行
-            if '\n' == self.config[self.i]:  # multiline value
-                if buf and param_name:
-                    if param_value is None:
-                        param_value = []
-                    # tag value
-                    param_value.append(buf.strip())
-                    buf = ''
-            elif self.config[self.i] == ' ':
-                if not param_name and len(buf.strip()) > 0:
-                    # tag name
-                    param_name = buf.strip()
-                    buf = ''
-                # has param_name or len(buf.strip()) == 0
-                else:
-                    buf += self.config[self.i]
-            elif ';' == self.config[self.i]:
-                if isinstance(param_value, list):
-                    # tag value
-                    param_value.append(buf.strip())
-                else:
-                    # tag value
-                    param_value = buf.strip()
-                # tag
-                data.append((param_name, param_value))
-                param_name = None
-                param_value = None
-                buf = ''
-            elif '{' == self.config[self.i]:
-                self.i += 1
-                # tag
-                block = self.parse_block()
-                # tag
-                data.append({'name': param_name, 'param': buf.strip(), 'value': block})
-                param_name = None
-                param_value = None
-                buf = ''
-            elif '}' == self.config[self.i]:
-                self.i += 1
-                return data
-            elif self.config[self.i] == '#':  # skip comments
-                if self.config[self.i + 1] == ' ':
-                    while self.i < self.length and self.config[self.i] != '\n':
-                        self.i += 1
-                else:
-                    buf += self.config[self.i]
-            else:
-                buf += self.config[self.i]
-            self.i += 1
-        return Config(data)
-
+    # active record end   #
 
 if __name__ == "__main__":
     path = r'../default'
-    parser = Parser()
-    #print "data:", parser.loadf(path).data
-    config = parser.loadf(path)
+    config = Config(path)
     lose_effect_item_arr = [('upstream', 'http'), 'server']
     #lose_effect_item_arr_test = [('server',), ('location', r'/doc/'), 'alias']
     print "--------------------------------------------------"
