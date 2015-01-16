@@ -53,11 +53,9 @@ class Config:
                 if isinstance(elem, tuple):
                     if elem[0] == item:
                         return elem
-                #####################################
                 if isinstance(elem, dict):
                     if elem['name'] == item:
                         return elem
-                #####################################
 
         elif isinstance(item, tuple):
             if 1 == len(item):
@@ -159,38 +157,16 @@ class Config:
         else:
             root.append(item)
 
-    # 删除节点(所有)
-    def _remove(self, item_arr, data=[]):
-        if [] == data:
-            data = self._data
-        if type(item_arr) in [str, tuple]:
-            item = item_arr
-        elif isinstance(item_arr, list):
-            if 1 == len(item_arr):
-                item = item_arr[0]
-            else:
-                elem = item_arr[0]
-                if type(elem) in [tuple, str]:
-                    self._remove(item_arr[1:], self._get_value(self._get(elem, data)))
-                    return
+    # 删除节点,仅限配置项
+    def _remove(self, name, reg, root=[]):
+        if [] == root:
+            root = self._data
+        elif root is None:
+            raise AttributeError('Root element is None')
 
-        if isinstance(item, str):
-            for i, elem in enumerate(data):
-                if isinstance(elem, tuple):
-                    if elem[0] == item:
-                        del data[i]
-                        return
-        elif isinstance(item, tuple):
-            if 1 == len(item):
-                item = (item[0], '')
-            for i, elem in enumerate(data):
-                if isinstance(elem, dict):
-                    if (elem['name'], elem['param']) == item:
-                        del data[i]
-                        return
-        else:
-            raise AttributeError("Unknown item type '%s' in item_arr" % item.__class__.__name__)
-        raise KeyError('Unable to remove')
+        for i, item in enumerate(root):
+            if type(item) is tuple and re.search(reg, item[1]):
+                del(root[i])
 
     def _parent(self, item_arr=[]):
         if [] == item_arr:
@@ -276,9 +252,6 @@ class Config:
             conf = self.gen_config()
             f.write(conf)
 
-    # toggle = _toggle
-    get = _get
-
     @property
     def data(self):
         return self._data
@@ -290,8 +263,8 @@ class Config:
     # active record begin #
 
     # _get 的进化版，支持模糊搜索，返回符合条件的数组
-    def _vague_get(selfi, item_arr):
-        pass
+    # def _vague_get(selfi, item_arr):
+        # pass
 
     # 根据name查找
     # find('http', 'server', ('location', '/'))
@@ -318,11 +291,17 @@ class Config:
         pass
 
     # 只能插入配置项
-    def append(self):
-        pass
+    def append(self, name, value, index=None):
+        root = self._get_value(self._get(self._position))
+        item = (name, value)
+        self._append(item, root, index)
+        return self
 
-    def remove(self):
-        pass
+    def remove(self, name, reg='.*'):
+        root = self._get_value(self._get(self._position))
+        print "root:", root
+        self._remove(name, reg, root)
+        return self
 
     def parent(self):
         pass
@@ -336,9 +315,9 @@ class Config:
     # active record end   #
 
 if __name__ == "__main__":
-    path = r'../fxcb.conf'
+    path = r'../default'
     config = Config(path)
 
-    print config.find(('upstream', 'fxcb-recharge-com')).toggle('server', '10.4.14.239').data
-    # print config.find('http', 'server').toggle('server_name').data
-    config.savef(r'../result.conf')
+    print config.find(('upstream', 'http')).toggle('server', '8000').gen_config()
+    # print config.find('http', 'server').append("addtional", "string").remove("additional", "string").gen_config()
+    # config.savef(r'../default.result')
