@@ -7,34 +7,36 @@ upstream http {
     server 127.0.0.1:8002 weight=3;
 }
 
-server {
-    listen 80 default_server;
-    listen [::]:80 default_server ipv6only=on;
-    root /usr/share/nginx/html;
-    index index.html index.htm index.php;
-    server_name localhost;
+http {
+	server {
+	    listen 80 default_server;
+	    listen [::]:80 default_server ipv6only=on;
+	    root /usr/share/nginx/html;
+	    index index.html index.htm index.php;
+	    server_name localhost;
 
-    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
-                        '$status $bytes_sent "$http_referer" '
-			'"$http_user_agent" "$http_x_forwarded_for" ';
+	    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+				'$status $bytes_sent "$http_referer" '
+				'"$http_user_agent" "$http_x_forwarded_for" ';
 
-    location / {
-        try_files $uri $uri/ =404;
-    }
+	    location / {
+		try_files $uri $uri/ =404;
+	    }
 
-    location /doc/ {
-    	alias /usr/share/doc/;
-	strange string;
-    }
+	    location /doc/ {
+		alias /usr/share/doc/;
+		strange string;
+	    }
 
-    error_page 404 /404.html;
+	    error_page 404 /404.html;
 
-    location = /50x.html {
-        root /usr/share/nginx/html;
-    }
+	    location = /50x.html {
+		root /usr/share/nginx/html;
+	    }
 
-    fastcgi_pass unix:/var/run/php5-fpm.sock;
-    fastcgi_index index.php;
-    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-    include fastcgi_params;
+	    fastcgi_pass unix:/var/run/php5-fpm.sock;
+	    fastcgi_index index.php;
+	    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+	    include fastcgi_params;
+	}
 }

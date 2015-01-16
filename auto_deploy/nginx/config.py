@@ -5,11 +5,19 @@ from parser import Parser
 
 
 class Config:
-    def __init__(self, filename):
-        self._data = Parser().loadf(filename)
+    # data 是配置文件路径或 数组
+    def __init__(self, data):
+        if type(data) is str:
+            self._data = Parser().loadf(data)
+        else:
+            self._data = data
+        self._position = []
 
     # 获取节点
     def _get(self, item_arr, data=[]):
+        if [] == item_arr:
+            return []
+
         if data == []:
             data = self._data
         # 外层block or item
@@ -32,13 +40,18 @@ class Config:
 
         if 'item' not in locals():
             raise KeyError('Error while getting parameter.')
-        # 外层item
+
         if isinstance(item, str):
             for elem in data:
                 if isinstance(elem, tuple):
                     if elem[0] == item:
                         return elem
-        # 外层item
+                #####################################
+                if isinstance(elem, dict):
+                    if elem['name'] == item:
+                        return elem
+                #####################################
+
         elif isinstance(item, tuple):
             if 1 == len(item):
                 item = (item[0], '')
@@ -46,6 +59,7 @@ class Config:
                 if isinstance(elem, dict):
                     if (elem['name'], elem['param']) == item:
                         return elem
+
         return None
 
     # 获取节点值
@@ -171,6 +185,15 @@ class Config:
             raise AttributeError("Unknown item type '%s' in item_arr" % item.__class__.__name__)
         raise KeyError('Unable to remove')
 
+    def _parent(self, item_arr=[]):
+        if [] == item_arr:
+            if [] == self._position:
+                return []
+            else:
+                return self._get(self._position[0:-1])
+        else:
+            return self._get(item_arr[0:-1])
+
     # 配置项开/关注释
     def _toggle(self, item_arr, value):
         parent_id = item_arr[0:-1]
@@ -243,14 +266,55 @@ class Config:
             f.write(conf)
 
     # toggle = _toggle
+    get = _get
 
-    # @property
-    # def data(self):
-    # return self._data
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def position(self):
+        return self._position
 
     # active record begin #
-    def find(self):
+
+    # _get 的进化版，支持模糊搜索，返回符合条件的数组
+    def _vague_get(selfi, item_arr):
         pass
+
+    # find('http', 'server', ('location', '/'))
+    # condition allow str or tuple
+    def find(self, *conditions):
+        # 构造 _get 查询条件
+        item_arr = []
+        end = len(conditions) - 1
+        for index, condition in enumerate(conditions):
+            if type(condition) is tuple:
+                item_arr.append(condition)
+            elif type(condition) is str and index == end:
+                item_arr.append(condition)
+            else:
+                item_arr.append((condition, ))
+
+        self._position = item_arr
+
+        # 查找符合的所有节点，返回数组
+        nodes = []
+        this = self._get(self._position)
+        parent = self._parent()
+        if [] == parent:
+            nodes.append(this)
+        else:
+            print "parent:", parent
+            for child in parent["value"]:
+                if (type(child), type(this)) == (dict, dict):
+                    if child["name"] == this["name"] and child["param"] == child["param"]:
+                        nodes.append(child)
+                elif (type(child), type(this)) == (tuple, tuple):
+                    if child[0] == this[0]:
+                        nodes.append(child)
+
+        return Config(nodes)
 
     def where(self):
         pass
@@ -269,17 +333,26 @@ class Config:
 if __name__ == "__main__":
     path = r'../default'
     config = Config(path)
-    lose_effect_item_arr = [('upstream', 'http'), 'server']
-    #lose_effect_item_arr_test = [('server',), ('location', r'/doc/'), 'alias']
+    #print "data:", config.data
     print "--------------------------------------------------"
+    #lose_effect_item_arr = [('upstream', 'http'), 'server']
+    locations = config.find('http', 'server', 'location')
+    #print "location data:", locations.data
+    #servers = item_arr = config.find(('upstream', 'http'), 'server')
+    print "--------------------------------------------------"
+    print locations.find(('location', '/doc/')).data
+
+    #print config.get(item_arr)
+    #lose_effect_item_arr_test = [('server',), ('location', r'/doc/'), 'alias']
+    #print "--------------------------------------------------"
     #toggle(path, take_effect_item_arr, "127.0.0.1:8001")
     #print "--------------------------------------------------"
     #config.toggle(path, lose_effect_item_arr, "127.0.0.1:8002")
-    config.toggle(lose_effect_item_arr, "127.0.0.1:8002 weight=3")
+    #config.toggle(lose_effect_item_arr, "127.0.0.1:8002 weight=3")
     #config.toggle(lose_effect_item_arr, "weight=3")
-    print "data:", config.data
+    #print "data:", config.data
 
-    print "--------------------------------------------------"
+    #print "--------------------------------------------------"
     #toggle(path, lose_effect_item_arr_test, "/usr/share/doc/")
     #print "--------------------------------------------------"
     # print "data:", parser.data
