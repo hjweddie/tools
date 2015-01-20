@@ -26,10 +26,11 @@ def _nginx_command(command, bin=None, config=None, is_sudo=True):
     elif "stop" == command:
         cmd = "%(bin)s -s stop" % locals()
 
-    if is_sudo:
-        sudo(cmd)
-    else:
-        run(cmd)
+    #if is_sudo:
+        #sudo(cmd)
+    #else:
+        #run(cmd)
+    sudo(cmd)
 
 
 def reload(bin=None, is_sudo=False):
