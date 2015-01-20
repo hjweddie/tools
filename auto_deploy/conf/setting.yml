@@ -1,0 +1,2 @@
+nginx_bin: /usr/sbin/nginx
+nginx_config: /etc/nginx/sites-enabled/default

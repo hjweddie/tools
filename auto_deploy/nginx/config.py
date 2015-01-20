@@ -315,7 +315,7 @@ class Config:
     # active record end   #
 
 if __name__ == "__main__":
-    path = r'../default'
+    path = r'./default'
     config = Config(path)
 
     print config.find(('upstream', 'http')).toggle('server', '8000').gen_config()
