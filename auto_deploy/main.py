@@ -13,6 +13,6 @@ from nginx import command
 if "__main__" == __name__:
     init.initialize()
     print env
-    command.reload(is_sudo=True)
+    #command.reload(is_sudo=True)
     #command.start(is_sudo=True)
     #command.stop(is_sudo=True)

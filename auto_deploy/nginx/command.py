@@ -9,7 +9,6 @@
 
 
 from fabric.api import run, env, sudo
-#from fabric.state import env
 
 
 def _nginx_command(command, bin=None, config=None, is_sudo=True):
@@ -26,20 +25,23 @@ def _nginx_command(command, bin=None, config=None, is_sudo=True):
     elif "stop" == command:
         cmd = "%(bin)s -s stop" % locals()
 
-    #if is_sudo:
-        #sudo(cmd)
-    #else:
-        #run(cmd)
-    sudo(cmd)
+    if is_sudo:
+        sudo(cmd)
+    else:
+        run(cmd)
 
 
-def reload(bin=None, is_sudo=False):
+def _nginx_reload(bin=None, is_sudo=False):
     _nginx_command("reload", bin=bin, is_sudo=sudo)
 
 
-def start(bin=None, config=None, is_sudo=True):
+def _nginx_start(bin=None, config=None, is_sudo=True):
     _nginx_command("start", bin=bin, config=config, is_sudo=is_sudo)
 
 
-def stop(bin=None, is_sudo=False):
+def _nginx_stop(bin=None, is_sudo=False):
     _nginx_command("stop", bin=bin, is_sudo=sudo)
+
+
+def reload(host, bin=None, is_sudo=False):
+    env.host_string = host
