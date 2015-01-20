@@ -7,7 +7,8 @@
 
 import yaml
 from optparse import OptionParser
-from fabric.state import env
+#from fabric.state import env
+from fabric.api import env
 
 
 def initialize():

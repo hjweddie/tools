@@ -1,2 +1,3 @@
+hosts: ['127.0.0.1']
 nginx_bin: /usr/sbin/nginx
 nginx_config: /etc/nginx/sites-enabled/default

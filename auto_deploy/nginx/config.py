@@ -3,7 +3,7 @@
 #
 #  Author:   huangjunwei@youmi.net
 #  Time:     Fri 16 Jan 2015 05:21:25 PM HKT
-#  File:     config.py
+#  File:     nginx/config.py
 #  Desc:
 #
 

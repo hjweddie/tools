@@ -1,8 +1,15 @@
 #!/usr/bin/env python
 # encoding: utf-8
+#
+#  Author:   huangjunwei@youmi.net
+#  Time:     Tue 20 Jan 2015 05:57:56 PM HKT
+#  File:     nginx/command.py
+#  Desc:
+#
 
-from fabric.api import run, sudo
-from fabric.state import env
+
+from fabric.api import run, env, sudo
+#from fabric.state import env
 
 
 def _nginx_command(command, bin=None, config=None, is_sudo=True):

@@ -3,7 +3,7 @@
 #
 #  Author:   huangjunwei@youmi.net
 #  Time:     Fri 16 Jan 2015 05:23:13 PM HKT
-#  File:     parser.py
+#  File:     nginx/parser.py
 #  Desc:
 #
 

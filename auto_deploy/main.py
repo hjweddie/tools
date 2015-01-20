@@ -6,12 +6,13 @@
 #
 
 import init
-from fabric.state import env
+from fabric.api import env
 from nginx import command
+
 
 if "__main__" == __name__:
     init.initialize()
     print env
     #command.reload(is_sudo=True)
-    command.start(is_sudo=True)
+    #command.start(is_sudo=True)
     #command.stop(is_sudo=True)
