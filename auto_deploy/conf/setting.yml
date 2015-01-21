@@ -11,3 +11,5 @@ hosts: [
 ]
 nginx_bin: /usr/sbin/nginx
 nginx_config: /etc/nginx/sites-enabled/default
+supervisorctl_bin: /usr/bin/supervisorctl
+supervisord_bin: /usr/bin/supervisord

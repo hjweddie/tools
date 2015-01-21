@@ -6,8 +6,6 @@
 #  File:     fs/operations.py
 #  Desc:
 #
-
-
 from fabric.operations import get, put
 from fabric.api import run, sudo
 from fabric.contrib import files
@@ -21,7 +19,7 @@ def _command(cmd, is_sudo=False):
 
 
 def ln(src, dest, is_sudo=False):
-    if files.is_link(dest, use_sudo=is_sudo):
+    if not files.is_link(dest, use_sudo=is_sudo):
         cmd = "ln -sf %s %s" % (src, dest)
         _command(cmd, is_sudo=is_sudo)
 

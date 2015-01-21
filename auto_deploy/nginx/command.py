@@ -6,8 +6,6 @@
 #  File:     nginx/command.py
 #  Desc:
 #
-
-
 from fabric.api import run, env, sudo
 
 
