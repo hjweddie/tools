@@ -23,10 +23,10 @@ def initialize():
     for key in data:
         env[key] = data[key]
 
-    upstreams = {}
-    for host in env.hosts:
-        upstreams[host] = {}
-        upstreams[host]["user"] = prompt("Please imput username of %s: " % (host))
-        upstreams[host]["password"] = prompt("Please imput password of %s: " % (host))
+    #upstreams = {}
+    #for host in env.hosts:
+        #upstreams[host] = {}
+        #upstreams[host]["user"] = prompt("Please imput username of %s: " % (host))
+        #upstreams[host]["password"] = prompt("Please imput password of %s: " % (host))
 
-    print upstreams
+    #print upstreams

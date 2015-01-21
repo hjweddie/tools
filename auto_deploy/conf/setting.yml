@@ -1,4 +1,13 @@
-hosts: ['127.0.0.1', 'localhost']
-host_string: '127.0.0.1'
+hosts: [
+        {
+                "domain":'172.16.1.250',
+                "user": "ymserver"
+        },
+        {
+                "domain":'localhost',
+                "user": "eddie"
+        }
+
+]
 nginx_bin: /usr/sbin/nginx
 nginx_config: /etc/nginx/sites-enabled/default

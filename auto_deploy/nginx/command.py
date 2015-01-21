@@ -31,17 +31,13 @@ def _nginx_command(command, bin=None, config=None, is_sudo=True):
         run(cmd)
 
 
-def _nginx_reload(bin=None, is_sudo=False):
+def reload(bin=None, is_sudo=False):
     _nginx_command("reload", bin=bin, is_sudo=sudo)
 
 
-def _nginx_start(bin=None, config=None, is_sudo=True):
+def start(bin=None, config=None, is_sudo=True):
     _nginx_command("start", bin=bin, config=config, is_sudo=is_sudo)
 
 
-def _nginx_stop(bin=None, is_sudo=False):
+def stop(bin=None, is_sudo=False):
     _nginx_command("stop", bin=bin, is_sudo=sudo)
-
-
-def reload(host, bin=None, is_sudo=False):
-    env.host_string = host
