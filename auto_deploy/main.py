@@ -29,6 +29,7 @@ def feedback_server():
     supervisor.supervisorctl_restart("feedback_server")
 
 
+# 复杂部署过程v1.0, 待完善
 def demos():
     ports = [8900, 8901, 8902, 8903]
 
