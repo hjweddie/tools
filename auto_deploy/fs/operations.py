@@ -20,6 +20,12 @@ def _command(cmd, is_sudo=False):
         run(cmd)
 
 
+def ln(src, dest, is_sudo=False):
+    if files.is_link(dest, use_sudo=is_sudo):
+        cmd = "ln -sf %s %s" % (src, dest)
+        _command(cmd, is_sudo=is_sudo)
+
+
 def download(remote_path, local_path, is_sudo=False):
     get(local_path=local_path, remote_path=remote_path, use_sudo=is_sudo)
 
@@ -38,3 +44,12 @@ def remove_dir(dir, is_sudo=False):
     if not files.exists(dir, use_sudo=is_sudo):
         cmd = "mkdir -p %s" % (dir)
         _command(cmd, is_sudo=is_sudo)
+
+
+# 以下待完善
+def comment(filename, regex, is_sudo=False, comment_char='#'):
+    pass
+
+
+def uncomment(filename, regex, is_sudo=False, comment_char='#'):
+    files.uncomment(filename, regex, use_sudo=is_sudo, char=comment_char)
