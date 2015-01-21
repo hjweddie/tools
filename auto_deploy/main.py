@@ -8,9 +8,10 @@
 #
 
 import init
+import time
 from fabric.api import env, sudo
 #from nginx import command
-#from fs import operations
+from fs import operations
 from pc import supervisor
 
 
@@ -20,20 +21,9 @@ if "__main__" == __name__:
     env.host_string = "172.16.1.250"
     env.user = "ymserver"
 
+    now = time.strftime("%Y%m%d%H%M%S")
+    dest_dir = "/home/ymserver/bin/feedback-server/bin/releases/sdk-fb"
+    dest = "%s-%s" % (dest_dir, now)
+    operations.upload("/home/eddie/workspace/gocode/src/feedback-server/bin/sdk-fb", dest, is_sudo=False, mode=0755)
+    operations.ln(dest, "/home/ymserver/bin/feedback-server/bin/sdk-fb", is_sudo=False)
     supervisor.supervisorctl_restart("feedback_server")
-
-    #operations.download("/etc/nginx/sites-enabled/default", "/home/eddie/Downloads", is_sudo=True)
-    #operations.upload("/home/eddie/Downloads/testfile", "/tmp/testfile", is_sudo=False)
-    #operations.ln("/tmp/testfile", "/tmp/softlink", is_sudo=False)
-    #for host in env.hosts:
-        #env.host_string = host["domain"]
-        #env.user = host["user"]
-        #env.password = None
-
-        #print env
-
-        #sudo("uname -r")
-        #sudo("ifconfig")
-    #command.reload(is_sudo=True)
-    #command.start(is_sudo=True)
-    #command.stop(is_sudo=True)
