@@ -1,14 +1,35 @@
-hosts: [
+ba_host: {
+                "server":"uc-faxin-ba-01",
+                "user": "ymserver"
+        }
+upstream_block: "fxcb-recharge-com"
+upstream_hosts: [
         {
-                "domain":'172.16.1.250',
+                "server": "10.4.14.239",
                 "user": "ymserver"
         },
         {
-                "domain":'localhost',
+                "server": "10.4.9.219",
+                "user": "ymserver"
+        }
+]
+
+
+hosts: [
+        {
+                "server":"172.16.1.250",
+                "user": "ymserver"
+        },
+        {
+                "server":'localhost',
                 "user": "eddie"
         }
 
 ]
+local_project_dir: "/home/ymserver/vhost/fxcallback"
+remote_porject_dir: "/home/ymserver/vhost"
+
+
 nginx_bin: /usr/sbin/nginx
 nginx_config: /etc/nginx/sites-enabled/default
 supervisorctl_bin: /usr/bin/supervisorctl
