@@ -25,7 +25,11 @@ def feedback_server():
     dest_dir = "/home/ymserver/bin/feedback-server/bin/releases/sdk-fb"
     dest = "%s-%s" % (dest_dir, now)
     operations.upload("/home/eddie/workspace/gocode/src/feedback-server/bin/sdk-fb", dest, is_sudo=False, mode=0755)
+
+    # ln -sf dest /home/ymserver/bin/feedback-server/bin/sdk-fb
     operations.ln(dest, "/home/ymserver/bin/feedback-server/bin/sdk-fb", is_sudo=False)
+
+    # sudo supervisorctl restart feedback_server
     supervisor.supervisorctl_restart("feedback_server")
 
 
