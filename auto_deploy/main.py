@@ -9,7 +9,7 @@
 
 import init
 import time
-from fabric.api import env, sudo
+from fabric.api import env
 from nginx import command, config
 from fs import operations
 from pc import supervisor
