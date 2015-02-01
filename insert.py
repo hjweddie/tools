@@ -27,3 +27,5 @@ def insert(times):
 if "__main__" == __name__:
     for i in range(1, 1000):
         insert(900)
+        if 0 == i % 20:
+            sleep(1)
