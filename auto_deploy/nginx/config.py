@@ -35,7 +35,7 @@ class Config:
         if type(item_arr) in [str, tuple]:
             item = item_arr
         # 外层block or 内层节点
-        elif isinstance(item_arr, list):
+        if isinstance(item_arr, list):
             if 1 == len(item_arr):
                 item = item_arr[0]
             else:
@@ -48,9 +48,8 @@ class Config:
                         if 'block' == data_elem['type']:
                             if (data_elem['name'], data_elem['param']) == element:
                                 return self._get(item_arr[1:], self._get_value(data_elem))
-
-        # if 'item' not in locals():
-        # raise KeyError('Error while getting parameter.')
+        else:
+            item = item_arr
 
         if isinstance(item, str):
             for elem in data:
@@ -171,15 +170,15 @@ class Config:
         self._set(parent_id, value=new_value)
 
     def gen_block(self, blocks, offset):
-        subrez = ''  # ready to return string
+        subrez = ''
         block_name = None
         block_param = ''
         for i, block in enumerate(blocks):
-            print type(block), block
             if 'item' == block['type']:
                 if isinstance(block['value'], str):
                     subrez += self.off_char * offset + '%s %s;\n' % (block['name'], block['value'])
-                else:  # multiline
+                else:
+                    # multiline
                     subrez += self.off_char * offset + '%s %s;\n' % (block['name'], self.gen_block(block['value'], offset + len(block['name']) + 1))
 
             elif 'block' == block['type']:
@@ -194,7 +193,8 @@ class Config:
                     'offset': self.off_char * offset, 'name': block['name'], 'data': block_value,
                     'param': param}
 
-            elif isinstance(block, str):  # multiline params
+            elif isinstance(block, str):
+                # multiline params
                 if 0 == i:
                     subrez += '%s\n' % block
                 else:
@@ -246,7 +246,6 @@ class Config:
             if type(condition) is tuple:
                 item_arr.append(condition)
             elif type(condition) is str and index == end:
-                # item_arr.append(condition)
                 item_arr.append((condition, ))
             else:
                 item_arr.append((condition, ))
