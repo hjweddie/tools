@@ -15,18 +15,22 @@ class Config:
     # data 是配置文件路径或 数组
     def __init__(self, data):
         if type(data) is str:
+            # if data is a file path
             self._data = Parser().loadf(data)
         else:
+            # if data is raw data
             self._data = data
         self._position = []
+        print self._data
 
     # 获取节点
     def _get(self, item_arr, data=[]):
         if [] == item_arr:
             return []
 
-        if data == []:
+        if [] == data:
             data = self._data
+
         # 外层block or item
         if type(item_arr) in [str, tuple]:
             item = item_arr
@@ -41,49 +45,34 @@ class Config:
                     if 1 == len(element):
                         element = (element[0], '')
                     for data_elem in data:
-                        if isinstance(data_elem, dict):
+                        if 'block' == data_elem['type']:
                             if (data_elem['name'], data_elem['param']) == element:
                                 return self._get(item_arr[1:], self._get_value(data_elem))
 
-        if 'item' not in locals():
-            raise KeyError('Error while getting parameter.')
+        # if 'item' not in locals():
+        # raise KeyError('Error while getting parameter.')
 
         if isinstance(item, str):
             for elem in data:
-                if isinstance(elem, tuple):
-                    if elem[0] == item:
-                        return elem
-                if isinstance(elem, dict):
-                    if elem['name'] == item:
-                        return elem
+                if item == elem['name']:
+                    return elem
 
         elif isinstance(item, tuple):
             if 1 == len(item):
                 item = (item[0], '')
             for elem in data:
-                if isinstance(elem, dict):
-                    if (elem['name'], elem['param']) == item:
-                        return elem
+                if 'block' == elem['type'] and item[0] == elem['name'] and item[1] == elem['param']:
+                    return elem
 
         return None
 
     # 获取节点值
     def _get_value(self, data):
-        if isinstance(data, tuple):
-            return data[1]
-        elif isinstance(data, dict):
-            return data['value']
-        else:
-            return data
+        return data['value']
 
     # 获取节点名
     def _get_name(self, data):
-        if isinstance(data, tuple):
-            return data[0]
-        elif isinstance(data, dict):
-            return data['name']
-        else:
-            return data
+        return data['name']
 
     # 设置节点
     # item_arr -> 节点路径
@@ -92,58 +81,36 @@ class Config:
     #     2. set via its parent
     def _set(self, item_arr, value=None, param=None, name=None):
         # 寻找父节点
-        # 最外层item
-        if isinstance(item_arr, str):
-            elem = item_arr  # str
+        if 1 == len(item_arr):
             parent = self._data
-        # 最外层block
-        elif isinstance(item_arr, list) and len(item_arr) == 1:
-            elem = item_arr[0]  # tuple
-            parent = self._data
-        # 内层block或item
         else:
-            elem = item_arr[-1]  # tuple
             parent = self._get_value(self._get(item_arr[0:-1]))
+
+        elem = item_arr[-1]
 
         if parent is None:
             raise KeyError('No such block.')
 
-        # 通过父节点设置
-        # 最外层item
-        if isinstance(elem, str) and isinstance(value, str):
-            # modifying text parameter
-            for i, param in enumerate(parent):
-                if isinstance(param, tuple):
-                    if param[0] == elem:
-                        if value is not None and name is not None:
-                            parent[i] = (name, value)
-                            return
-                        elif value is not None:
-                            parent[i] = (param[0], value)
-                            return
-                        elif name is not None:
-                            parent[i] = (name, param[1])
-                            return
-                        raise TypeError('Not expected value type')
+        # 修改item
+        if isinstance(elem, str):
+            for i, child in enumerate(parent):
+                if 'item' == child['type']:
+                    if value is not None and isinstance(value, str):
+                        child['value'] = value
+                    if name is not None:
+                        child['name'] = name
 
         elif isinstance(elem, tuple):
             # modifying block
-            if 1 == len(elem):
-                elem = (elem[0], '')
-            for i, block in enumerate(parent):
-                if isinstance(block, dict):
-                    if elem == (block['name'], block['param']):
+            for i, child in enumerate(parent):
+                if 'block' == child['type']:
+                    if elem == (child['name'], child['param']):
                         if value is not None and isinstance(value, list):
                             parent[i]['value'] = value
-                            return
                         if param is not None and isinstance(param, str):
                             parent[i]['param'] = param
-                            return
                         if name is not None and isinstance(name, str):
                             parent[i]['name'] = name
-                            return
-                        raise TypeError('Not expected value type')
-        raise KeyError('No such parameter.')
 
     # 添加节点
     # position -> insert index
@@ -165,7 +132,7 @@ class Config:
             raise AttributeError('Root element is None')
 
         for i, item in enumerate(root):
-            if type(item) is tuple and re.search(reg, item[1]):
+            if 'item' == item['type'] and re.search(reg, item['value']):
                 del(root[i])
 
     def _parent(self, item_arr=[]):
@@ -185,10 +152,10 @@ class Config:
         parent_value = self._get_value(parent)
         new_value = []
 
-        for row in parent_value:
-            if isinstance(row, tuple):
-                n = row[0]
-                v = row[1]
+        for child in parent_value:
+            if 'item' == child['type']:
+                n = child['name']
+                v = child['value']
 
                 if this_name in n and re.search(reg, v):
                     if '#' == n[0]:
@@ -197,10 +164,10 @@ class Config:
                     else:
                         # to lose effect
                         n = "%s%s" % ('#', n)
-                new_row = (n, v)
+                new_row = {'name': n, 'value': v, 'type': 'item'}
                 new_value.append(new_row)
             else:
-                new_value.append(row)
+                new_value.append(child)
         self._set(parent_id, value=new_value)
 
     def gen_block(self, blocks, offset):
@@ -208,13 +175,14 @@ class Config:
         block_name = None
         block_param = ''
         for i, block in enumerate(blocks):
-            if isinstance(block, tuple):
-                if isinstance(block[1], str):
-                    subrez += self.off_char * offset + '%s %s;\n' % (block[0], block[1])
+            print type(block), block
+            if 'item' == block['type']:
+                if isinstance(block['value'], str):
+                    subrez += self.off_char * offset + '%s %s;\n' % (block['name'], block['value'])
                 else:  # multiline
-                    subrez += self.off_char * offset + '%s %s;\n' % (block[0], self.gen_block(block[1], offset + len(block[0]) + 1))
+                    subrez += self.off_char * offset + '%s %s;\n' % (block['name'], self.gen_block(block['value'], offset + len(block['name']) + 1))
 
-            elif isinstance(block, dict):
+            elif 'block' == block['type']:
                 block_value = self.gen_block(block['value'], offset + 4)
                 if block['param']:
                     param = block['param'] + ' '
@@ -244,6 +212,7 @@ class Config:
     ########################################################
     def gen_config(self, offset_char=' '):
         self.off_char = offset_char
+        print "in gen_config:", self._data
         return self.gen_block(self._data, 0)
 
     # 生成新配置文件
@@ -299,7 +268,6 @@ class Config:
 
     def remove(self, name, reg='.*'):
         root = self._get_value(self._get(self._position))
-        print "root:", root
         self._remove(name, reg, root)
         return self
 

@@ -74,7 +74,8 @@ class Parser:
                     # tag value
                     param_value = buf.strip()
                 # tag
-                data.append((param_name, param_value))
+                # data.append((param_name, param_value))
+                data.append({'name': param_name, 'value': param_value, 'type': 'item'})
                 param_name = None
                 param_value = None
                 buf = ''
@@ -83,16 +84,16 @@ class Parser:
                 # tag
                 block = self.parse_block()
                 # tag
-                data.append({'name': param_name, 'param': buf.strip(), 'value': block})
+                data.append({'name': param_name, 'param': buf.strip(), 'value': block, 'type': 'block'})
                 param_name = None
                 param_value = None
                 buf = ''
             elif '}' == self.config[self.i]:
                 self.i += 1
                 return data
-            elif self.config[self.i] == '#':  # skip comments
-                if self.config[self.i + 1] == ' ':
-                    while self.i < self.length and self.config[self.i] != '\n':
+            elif '#' == self.config[self.i]:  # skip comments
+                if ' ' == self.config[self.i + 1]:
+                    while self.i < self.length and '\n' != self.config[self.i]:
                         self.i += 1
                 else:
                     buf += self.config[self.i]
