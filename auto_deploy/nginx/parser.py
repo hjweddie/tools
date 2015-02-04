@@ -51,7 +51,8 @@ class Parser:
         buf = ''
         while self.i < self.length:
             # 换行符可能block换行或item之间的换行
-            if '\n' == self.config[self.i]:  # multiline value
+            if '\n' == self.config[self.i]:
+                # multiline value
                 if buf and param_name:
                     if param_value is None:
                         param_value = []
@@ -74,7 +75,6 @@ class Parser:
                     # tag value
                     param_value = buf.strip()
                 # tag
-                # data.append((param_name, param_value))
                 data.append({'name': param_name, 'value': param_value, 'type': 'item'})
                 param_name = None
                 param_value = None
