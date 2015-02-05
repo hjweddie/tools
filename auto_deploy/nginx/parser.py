@@ -64,7 +64,6 @@ class Parser:
                     # tag name
                     param_name = buf.strip()
                     buf = ''
-                # has param_name or len(buf.strip()) == 0
                 else:
                     buf += self.config[self.i]
             elif ';' == self.config[self.i]:
@@ -75,7 +74,7 @@ class Parser:
                     # tag value
                     param_value = buf.strip()
                 # tag
-                data.append({'name': param_name, 'value': param_value, 'type': 'item'})
+                data.append({'name': param_name, 'value': param_value.split(' '), 'type': 'item'})
                 param_name = None
                 param_value = None
                 buf = ''

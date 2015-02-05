@@ -25,6 +25,7 @@ class Config:
 
     # 获取节点
     def _get(self, item_arr, data=[]):
+        print "item_arr in _get:", item_arr
         if [] == item_arr:
             return []
 
@@ -51,6 +52,8 @@ class Config:
         else:
             item = item_arr
 
+        print "item in _get:", item
+
         if isinstance(item, str):
             for elem in data:
                 if item == elem['name']:
@@ -60,6 +63,7 @@ class Config:
             if 1 == len(item):
                 item = (item[0], '')
             for elem in data:
+                print "in _get:", elem
                 if 'block' == elem['type'] and item[0] == elem['name'] and item[1] == elem['param']:
                     return elem
 
@@ -67,6 +71,7 @@ class Config:
 
     # 获取节点值
     def _get_value(self, data):
+        print "in get value:", data
         return data['value']
 
     # 获取节点名
@@ -156,13 +161,16 @@ class Config:
                 n = child['name']
                 v = child['value']
 
-                if this_name in n and re.search(reg, v):
-                    if '#' == n[0]:
-                        # to take effect
-                        n = n[1:]
-                    else:
-                        # to lose effect
-                        n = "%s%s" % ('#', n)
+                if this_name in n:
+                    for value in v:
+                        if re.search(reg, value):
+                            if '#' == n[0]:
+                                # to take effect
+                                n = n[1:]
+                            else:
+                                # to lose effect
+                                n = "%s%s" % ('#', n)
+                            break
                 new_row = {'name': n, 'value': v, 'type': 'item'}
                 new_value.append(new_row)
             else:
@@ -175,8 +183,8 @@ class Config:
         block_param = ''
         for i, block in enumerate(blocks):
             if 'item' == block['type']:
-                if isinstance(block['value'], str):
-                    subrez += self.off_char * offset + '%s %s;\n' % (block['name'], block['value'])
+                if isinstance(block['value'], list):
+                    subrez += self.off_char * offset + '%s %s;\n' % (block['name'], ' '.join(block['value']))
                 else:
                     # multiline
                     subrez += self.off_char * offset + '%s %s;\n' % (block['name'], self.gen_block(block['value'], offset + len(block['name']) + 1))
