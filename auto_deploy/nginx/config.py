@@ -42,7 +42,7 @@ class Config:
             else:
                 element = item_arr[0]
                 if isinstance(element, tuple):  # cannot be a string
-                    # 只有name
+                    # 只有name, 如 http { ... }
                     if 1 == len(element):
                         element = (element[0], '')
                     for data_elem in data:
@@ -51,8 +51,6 @@ class Config:
                                 return self._get(item_arr[1:], self._get_value(data_elem))
         else:
             item = item_arr
-
-        print "item in _get:", item
 
         if isinstance(item, str):
             for elem in data:
@@ -64,14 +62,13 @@ class Config:
                 item = (item[0], '')
             for elem in data:
                 print "in _get:", elem
-                if 'block' == elem['type'] and item[0] == elem['name'] and item[1] == elem['param']:
+                if 'block' == elem['type'] and (elem['name'], elem['param']) == item:
                     return elem
 
         return None
 
     # 获取节点值
     def _get_value(self, data):
-        print "in get value:", data
         return data['value']
 
     # 获取节点名
@@ -100,7 +97,10 @@ class Config:
             for i, child in enumerate(parent):
                 if 'item' == child['type']:
                     if value is not None and isinstance(value, str):
-                        child['value'] = value
+                        if isinstance(value, str):
+                            child['value'] = [value]
+                        else:
+                            child['value'] = value
                     if name is not None:
                         child['name'] = name
 
@@ -177,17 +177,16 @@ class Config:
                 new_value.append(child)
         self._set(parent_id, value=new_value)
 
+    ########################################################
+    #                  可供外部访问的函数                  #
+    ########################################################
     def gen_block(self, blocks, offset):
         subrez = ''
         block_name = None
         block_param = ''
         for i, block in enumerate(blocks):
             if 'item' == block['type']:
-                if isinstance(block['value'], list):
-                    subrez += self.off_char * offset + '%s %s;\n' % (block['name'], ' '.join(block['value']))
-                else:
-                    # multiline
-                    subrez += self.off_char * offset + '%s %s;\n' % (block['name'], self.gen_block(block['value'], offset + len(block['name']) + 1))
+                subrez += self.off_char * offset + '%s %s;\n' % (block['name'], ' '.join(block['value']))
 
             elif 'block' == block['type']:
                 block_value = self.gen_block(block['value'], offset + 4)
@@ -202,7 +201,6 @@ class Config:
                     'param': param}
 
             elif isinstance(block, str):
-                # multiline params
                 if 0 == i:
                     subrez += '%s\n' % block
                 else:
@@ -215,9 +213,6 @@ class Config:
         else:
             return subrez
 
-    ########################################################
-    #                  可供外部访问的函数                  #
-    ########################################################
     def gen_config(self, offset_char=' '):
         self.off_char = offset_char
         print "in gen_config:", self._data
@@ -243,7 +238,7 @@ class Config:
     # def _vague_get(selfi, item_arr):
         # pass
 
-    # 根据name查找
+    # 根据name查找第一个符合条件的
     # find('http', 'server', ('location', '/'))
     # condition allow str or tuple
     def find(self, *conditions):
@@ -295,4 +290,4 @@ if __name__ == "__main__":
 
     print config.find(('upstream', 'http')).toggle('server', '8000').gen_config()
     # print config.find('http', 'server').append("addtional", "string").remove("additional", "string").gen_config()
-    # config.savef(r'../default.result')
+    # config.savef(r'./default.result')

@@ -52,16 +52,13 @@ class Parser:
         while self.i < self.length:
             # 换行符可能block换行或item之间的换行
             if '\n' == self.config[self.i]:
-                # multiline value
                 if buf and param_name:
                     if param_value is None:
                         param_value = []
-                    # tag value
                     param_value.append(buf.strip())
                     buf = ''
-            elif self.config[self.i] == ' ':
+            elif ' ' == self.config[self.i]:
                 if not param_name and len(buf.strip()) > 0:
-                    # tag name
                     param_name = buf.strip()
                     buf = ''
                 else:
@@ -80,9 +77,7 @@ class Parser:
                 buf = ''
             elif '{' == self.config[self.i]:
                 self.i += 1
-                # tag
                 block = self.parse_block()
-                # tag
                 data.append({'name': param_name, 'param': buf.strip(), 'value': block, 'type': 'block'})
                 param_name = None
                 param_value = None
@@ -91,6 +86,7 @@ class Parser:
                 self.i += 1
                 return data
             elif '#' == self.config[self.i]:  # skip comments
+                # 遇到#时，忽略下一字符为空格的注释
                 if ' ' == self.config[self.i + 1]:
                     while self.i < self.length and '\n' != self.config[self.i]:
                         self.i += 1
