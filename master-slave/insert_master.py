@@ -7,7 +7,7 @@ import md5
 import time
 # from multiprocessing import Pool
 
-db = torndb.Connection("127.0.0.1:3307", "test", "root", "123")
+db = torndb.Connection("127.0.0.1:3306", "test", "root", "123")
 #db = torndb.Connection("127.0.0.1:3308", "test", "root", "123")
 
 
@@ -27,7 +27,7 @@ def insert(times):
     print "lastid:", lastid
 
 if "__main__" == __name__:
-    for i in range(1, 1000):
+    for i in range(1, 15000):
         insert(900)
-        if 0 == i % 20:
-            time.sleep(1)
+        if 0 == i % 30:
+            time.sleep(10)
