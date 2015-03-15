@@ -11,7 +11,8 @@
 //#include <cstring>
 #include <climits>
 
-const int MAX_LEVEL = 6;
+//const int MAX_LEVEL = 6;
+const int MAX_LEVEL = 1;
 const float P = 0.5;
 
 using namespace std;
@@ -36,11 +37,13 @@ struct snode {
 	snode *down = nullptr;
 
 	int value = INT_MIN;
+	int level = 0;
 
-	snode(snode *next, snode *down, int value) {
+	snode(snode *next, snode *down, int value, int level) {
 		this->next = next;
 		this->down = down;
 		this-> value = value;
+		this->level = level;
 	}
 
 	~snode() {}
@@ -48,7 +51,15 @@ struct snode {
 
 struct skiplist {
 	snode **headers = nullptr;
-	int level = 0;
+	const int max_level = 0;
+
+	skiplist(const int &max_level) : max_level(max_level) {
+		//this->max_level = max_level;
+	}
+
+	~skiplist() {
+		delete [] headers;
+	}
 };
 
 void display(skiplist *list) {
@@ -64,16 +75,33 @@ void display(skiplist *list) {
 	}
 }
 
+void insert(skiplist *skiplist, int value) {
+	// 随机插入某一层
+	int lvl = random_level();
+	cout << "lel: " << lvl << endl;
+	int i = 0;
+
+	snode *head = skiplist->headers[0];
+	cout << head->down->value << endl;
+
+	// 找到该插入的层
+	i = skiplist->max_level;
+	while(nullptr != head->down && --i >- lvl) {
+		head = head->down;
+	}
+
+	cout << "head level: " << head->level << endl;
+}
+
 void init(skiplist *list) {
-	list->headers = new snode * [MAX_LEVEL];
-	list->level = MAX_LEVEL;
+	list->headers = new snode * [list->max_level];
+	//list->level = MAX_LEVEL;
 
-
-	snode *node1 = new snode(nullptr, nullptr, 1);
-	snode *node2 = new snode(nullptr, nullptr, 2);
-	snode *node3 = new snode(nullptr, nullptr, 3);
-	snode *node4 = new snode(nullptr, nullptr, 1);
-	snode *node5 = new snode(nullptr, nullptr, 3);
+	snode *node1 = new snode(nullptr, nullptr, 1, 0);
+	snode *node2 = new snode(nullptr, nullptr, 2, 0);
+	snode *node3 = new snode(nullptr, nullptr, 3, 0);
+	snode *node4 = new snode(nullptr, nullptr, 1, 1);
+	snode *node5 = new snode(nullptr, nullptr, 3, 1);
 
 	node1->next = node2;
 	node2->next = node3;
@@ -85,32 +113,16 @@ void init(skiplist *list) {
 	list->headers = &node4;
 
 	display(list);
+	insert(list, 4);
 }
 
-
-void insert(skiplist *skiplist, int value) {
-	// 随机插入某一层
-	int lvl = random_level();
-	int i = 0;
-
-	snode *head = skiplist->headers[0];
-
-	// 找到该插入的层
-	i = MAX_LEVEL;
-	while(--i > lvl) {
-		head = head->down;
-	}
-
-
-	cout << head[0]->value << endl;
-}
 
 
 int main() {
-	struct skiplist *skiplist = new struct skiplist();
+	struct skiplist *skiplist = new struct skiplist(1);
 	init(skiplist);
 
-	cout << random_level() << endl;
+	//cout << random_level() << endl;
 
 	return 0;
 }
