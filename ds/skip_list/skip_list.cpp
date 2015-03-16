@@ -8,17 +8,9 @@
 
 #include <iostream>
 #include <cmath>
-#include <climits>
 #include "skip_list.h"
 
-const int MAX_LEVEL = 6;
-const float P = 0.5;
-
 using namespace std;
-
-float frand() {
-	return (float) rand() / RAND_MAX;
-}
 
 int random_level() {
 	static bool first = true;

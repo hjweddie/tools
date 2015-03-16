@@ -5,10 +5,17 @@
 *  Desc:     my implementation of skip list
 */
 
-#include <iostream>
+#include <climits>
+
+#define frand() (float) rand() / RAND_MAX
 
 using namespace std;
 
+const int MAX_LEVEL = 6;
+const float P = 0.5;
+
+// 随机层数
+int random_level();
 
 // 链表节点
 struct snode {
@@ -16,16 +23,18 @@ struct snode {
 	snode *down = nullptr;
 
 	int value = INT_MIN;
-	int level = 0;
+	const int level = 0;
 
-	snode(snode *next, snode *down, int value, int level) {
+	snode(snode *next, snode *down, const int &value, const int &level) : level(level) {
 		this->next = next;
 		this->down = down;
 		this->value = value;
-		this->level = level;
 	}
 
-	~snode() {}
+	~snode() {
+		delete next;
+		delete down;
+	}
 };
 
 // 跳跃链表
